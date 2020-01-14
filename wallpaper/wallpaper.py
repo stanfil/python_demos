@@ -3,10 +3,13 @@ import re
 import time
 import threading
 import math
+import os
 
 CNT = 0
 # 每个线程下载图片数
-CAPACITY = 10
+CAPACITY = 30
+# wallpaper 保存目录
+SAVE_DIR = 'wallpapers'
 
 class httpThread (threading.Thread):
     def __init__(self, threadID, threadName, httpList):
@@ -19,21 +22,6 @@ class httpThread (threading.Thread):
         for image in self.list:
             downloadImg(image, self.name)
         
-
-
-def main(): 
-    images = getAllImageUrl()
-    l = len(images)
-    threadNum = math.ceil(l / CAPACITY)
-    for i in range(threadNum):
-        if (i + 1) * CAPACITY <= l:
-            imageList = images[i * CAPACITY : (i + 1) * CAPACITY]
-        else:
-            imageList = images[i * CAPACITY : l]
-        httpThread(i+1, 'thread_' + str(i+1), imageList)
-
-        
-
 
 def transformPx(url):
     arr = url.split('/')
@@ -50,6 +38,9 @@ def getAllImageUrl():
         images = pattern.findall(text)
         images = list(map(transformPx, images))
         imgArr.extend(images)
+
+        # print
+        # print(imgArr)
     return imgArr
 
 
@@ -67,6 +58,26 @@ def doneLog():
     print('Done')
     print('Time Cost:')
     print(time.process_time())
+
+
+def createDir():
+    isDirExisted = os.path.exists(SAVE_DIR)
+    if not isDirExisted:
+        os.makedirs(SAVE_DIR)
+
+
+def main(): 
+    createDir()
+    images = getAllImageUrl()
+    l = len(images)
+    threadNum = math.ceil(l / CAPACITY)
+    for i in range(threadNum):
+        if (i + 1) * CAPACITY <= l:
+            imageList = images[i * CAPACITY : (i + 1) * CAPACITY]
+        else:
+            imageList = images[i * CAPACITY : l]
+        thread = httpThread(i+1, 'thread_' + str(i+1), imageList)
+        thread.run()
 
 
 main()
